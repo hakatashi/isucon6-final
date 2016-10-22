@@ -78,7 +78,7 @@ def type_cast_stroke_data(data):
         'green': int(data['green']),
         'blue': int(data['blue']),
         'alpha': float(data['alpha']),
-        'points': data['points'] if 'points' in data and data['points'] else '',
+        'points': list(map(type_cast_point_data, data['points'])) if 'points' in data and data['points'] else [],
         'created_at': to_RFC3339_micro(data['created_at']) if data['created_at'] else '',
     }
 
@@ -114,7 +114,7 @@ def get_strokes(db, room_id, greater_than_id):
     sql += ' WHERE `room_id` = %(room_id)s AND `id` > %(greater_than_id)s ORDER BY `id` ASC'
     strokes = select_all(db, sql, {'room_id': room_id, 'greater_than_id': greater_than_id})
     for stroke in strokes:
-        stroke['points'] = map(lambda p:{'x': p.split(',')[0], 'y': p.split(',')[1]}, stroke['points'].split(' '))
+        stroke['points'] = map(lambda p:{'x': int(p.split(',')[0]), 'y': int(p.split(',')[1])}, stroke['points'].split(' '))
     return strokes
 
 
