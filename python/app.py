@@ -109,11 +109,6 @@ def check_token(db, csrf_token):
     return token
 
 
-def get_stroke_points(db, stroke_id):
-    sql = 'SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = %(stroke_id)s ORDER BY `id` ASC'
-    return select_all(db, sql, {'stroke_id': stroke_id})
-
-
 def get_strokes(db, room_id, greater_than_id):
     sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`'
     sql += ' WHERE `room_id` = %(room_id)s AND `id` > %(greater_than_id)s ORDER BY `id` ASC'
@@ -241,7 +236,7 @@ def get_api_rooms_id(id):
     strokes = get_strokes(db, room['id'], 0)
 
     for i, stroke in enumerate(strokes):
-        strokes[i]['points'] = get_stroke_points(db, stroke['id'])
+        strokes[i]['points'] = json.loads(stroke['points'])
 
     room['strokes'] = strokes
     room['watcher_count'] = get_watcher_count(db, room['id'])
@@ -278,7 +273,7 @@ def get_api_stream_rooms_id(id):
 
     sse.publish(watcher_count, type = 'watcher_count', channel = str(room['id']))
 
-    response = 
+    response =
         'retry:500\n\n' +
         'event:watcher_count\n' +
         'data:%d\n\n' % (watcher_count)
@@ -340,6 +335,8 @@ def post_api_strokes_rooms_id(id):
         })
         stroke_id = cursor.lastrowid
 
+        points = []
+
         sql = 'INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (%(stroke_id)s, %(x)s, %(y)s)'
         for point in posted_stroke.get('points'):
             cursor.execute(sql, {
@@ -347,6 +344,20 @@ def post_api_strokes_rooms_id(id):
                 'x': point['x'],
                 'y': point['y']
             })
+            point_id = cursor.lastrowid
+            points.append({
+                'id': point_id,
+                'stroke_id': stroke_id,
+                'x': point['x'],
+                'y': point['y'],
+            })
+
+        points_str = json.dumps(points)
+        cursor.execute('UPDATE strokes SET points = %(points)s WHERE id = %(id)s', {
+            'points': points_str,
+            'id': stroke_id,
+        })
+
         cursor.connection.commit()
     except Exception as e:
         cursor.connection.rollback()
@@ -360,8 +371,8 @@ def post_api_strokes_rooms_id(id):
     sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`'
     sql += ' WHERE `id` = %(stroke_id)s'
     stroke = select_one(db, sql, {'stroke_id': stroke_id})
+    stroke['points'] = json.loads(stroke['points'])
 
-    stroke['points'] = get_stroke_points(db, stroke_id)
     sse.publish(type_cast_stroke_data(stroke), type = 'stroke', id = str(stroke['id']), channel = str(room['id']))
 
     return jsonify({'stroke': type_cast_stroke_data(stroke)})

@@ -9,7 +9,7 @@ connection = mysql.createConnection do
 connection.connect!
 
 ret = Infinity
-offset = 0
+offset = 20300
 
 error <- async.whilst do
   -> ret > 0
@@ -27,7 +27,7 @@ error <- async.whilst do
       offset := Math.max offset, stroke.id
       ret++
       stroke-points = points.filter((point) -> point.stroke_id is stroke.id).sort (a, b) -> a.id - b.id
-      points-string = stroke-points.map((point) -> "#{point.x},#{point.y}").join ' '
+      points-string = JSON.stringify stroke-points
 
       error <- connection.query "UPDATE strokes SET points = '#points-string' WHERE id = #{stroke.id}"
       done!
