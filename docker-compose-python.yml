@@ -4,6 +4,8 @@ services:
     extends:
       file: docker-compose-mysql.yml
       service: mysql
+    ports:
+      - "3306:3306"
   python:
     build:
       context: ./python
