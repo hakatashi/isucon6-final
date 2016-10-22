@@ -4,6 +4,8 @@ services:
     extends:
       file: docker-compose-mysql.yml
       service: mysql
+    ports:
+      - "3306:3306"
   php:
     build:
       context: ./php
@@ -20,6 +22,8 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
+    ports:
+      - "80:80"
   react:
     extends:
       file: docker-compose-react.yml
