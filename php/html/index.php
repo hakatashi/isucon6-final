@@ -150,15 +150,13 @@ $container['logger'] = function ($c) {
 $app->post('/api/csrf_token', function ($request, $response, $args) {
     $dbh = getPDO();
 
-    $sql = 'INSERT INTO `tokens` (`csrf_token`) VALUES';
-    $sql .= ' (SHA2(CONCAT(RAND(), UUID_SHORT()), 256))';
+    $token = hash('sha256', rand().uniqid());
+
+    $sql = "INSERT INTO `tokens` (`csrf_token`) VALUES ( $token )";
 
     $id = execute($dbh, $sql);
 
-    $sql = 'SELECT `id`, `csrf_token`, `created_at` FROM `tokens` WHERE id = :id';
-    $token = selectOne($dbh, $sql, [':id' => $id]);
-
-    return $response->withJson(['token' => $token['csrf_token']]);
+    return $response->withJson(['token' => $token]);
 });
 
 $app->get('/api/rooms', function ($request, $response, $args) {
