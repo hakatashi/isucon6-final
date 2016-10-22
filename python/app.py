@@ -349,6 +349,7 @@ def post_api_strokes_rooms_id(id):
             'alpha': posted_stroke.get('alpha'),
             'points': ' '.join(map(lambda s:str(s['x']) + ',' + str(s['y']), posted_stroke.get('points'))),
         })
+        stroke_id = cursor.lastrowid
         cursor.connection.commit()
     except Exception as e:
         cursor.connection.rollback()
