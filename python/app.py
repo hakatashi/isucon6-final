@@ -6,7 +6,7 @@ import time
 
 import MySQLdb.cursors
 
-from flask import Flask, jsonify, request, Response
+from flask import Flask, jsonify, request, Response, redirect, url_for
 from flask_sse import sse
 
 
@@ -137,7 +137,7 @@ app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 app.config['DEBUG'] = os.environ.get('ISUCON_ENV') != 'production'
 app.config['REDIS_URL'] = 'redis://' + os.environ.get('REDIS_URL')
-app.register_blueprint(sse, url_prefix = '/sse')
+app.register_blueprint(sse, url_prefix = '/api/sse')
 
 # Routes
 
@@ -263,43 +263,26 @@ def get_api_stream_rooms_id(id):
 
     last_stroke_id = 0
     if 'Last-Event-ID' in request.headers:
-        last_stroke_id = request.headers.get('Last-Event-ID')
+        return redirect(url_for('sse.stream', channel = str(room['id'])))
 
-    def gen(db, room, token, last_stroke_id):
+    update_room_watcher(db, room['id'], token['id'])
+    watcher_count = get_watcher_count(db, room['id'])
 
-        update_room_watcher(db, room['id'], token['id'])
-        watcher_count = get_watcher_count(db, room['id'])
+    sse.publish(watcher_count, type = 'watcher_count', channel = str(room['id']))
 
-        yield print_and_flush(
-            'retry:500\n\n' +
-            'event:watcher_count\n' +
-            'data:%d\n\n' % (watcher_count)
-        )
+    response = 
+        'retry:500\n\n' +
+        'event:watcher_count\n' +
+        'data:%d\n\n' % (watcher_count)
 
-        for loop in range(6):
-            time.sleep(0.5)  # 500ms
+    strokes = get_strokes(db, room['id'], last_stroke_id)
+    for stroke in strokes:
+        response +=
+            'id:' + str(stroke['id']) + '\n\n' +
+            'event:stroke\n' +
+            'data:' + json.dumps(type_cast_stroke_data(stroke)) + '\n\n'
 
-            strokes = get_strokes(db, room['id'], last_stroke_id)
-            # app.logger.info(strokes)
-
-            for stroke in strokes:
-                yield print_and_flush(
-                    'id:' + str(stroke['id']) + '\n\n' +
-                    'event:stroke\n' +
-                    'data:' + json.dumps(type_cast_stroke_data(stroke)) + '\n\n'
-                )
-                last_stroke_id = stroke['id']
-
-            update_room_watcher(db, room['id'], token['id'])
-            new_watcher_count = get_watcher_count(db, room['id'])
-            if new_watcher_count != watcher_count:
-                watcher_count = new_watcher_count
-                yield print_and_flush(
-                    'event:watcher_count\n' +
-                    'data:%d\n\n' % (watcher_count)
-                )
-
-    return Response(gen(db, room, token, last_stroke_id), mimetype='text/event-stream')
+    return Response(response, mimetype='text/event-stream')
 
 
 @app.route('/api/strokes/rooms/<id>', methods=['POST'])
@@ -363,6 +346,8 @@ def post_api_strokes_rooms_id(id):
     sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`, `points` FROM `strokes`'
     sql += ' WHERE `id` = %(stroke_id)s'
     stroke = select_one(db, sql, {'stroke_id': stroke_id})
+
+    sse.publish(type_cast_stroke_data(stroke), type = 'stroke', id = str(stroke['id']), channel = str(room['id']))
 
     return jsonify({'stroke': type_cast_stroke_data(stroke)})
 
