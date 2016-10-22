@@ -112,7 +112,10 @@ def check_token(db, csrf_token):
 def get_strokes(db, room_id, greater_than_id):
     sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`, `points` FROM `strokes`'
     sql += ' WHERE `room_id` = %(room_id)s AND `id` > %(greater_than_id)s ORDER BY `id` ASC'
-    return select_all(db, sql, {'room_id': room_id, 'greater_than_id': greater_than_id})
+    strokes = select_all(db, sql, {'room_id': room_id, 'greater_than_id': greater_than_id})
+    for stroke in strokes:
+        strokes['points'] = map(lambda p:{'x': ','.split(p)[0], 'y': ','.split(p)[1]}, ' '.split(stroke['points']))
+    return strokes
 
 
 def get_room(db, room_id):
