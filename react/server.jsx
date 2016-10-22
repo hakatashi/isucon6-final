@@ -1,5 +1,5 @@
 import express from 'express';
-import https from 'https';
+import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import React from 'react';
@@ -20,16 +20,8 @@ const apiBaseUrl = process.env.API;
 if (!apiBaseUrl) {
   throw 'Please set environment variable API=http://...';
 }
-if (!process.env.SSL_KEY) {
-  throw 'Please set environment variable SSL_KEY=/path/to/server.key';
-}
-if (!process.env.SSL_CERT) {
-  throw 'Please set environment variable SSL_CERT=/path/to/server.crt';
-}
 
 const options = {
-  key: fs.readFileSync(process.env.SSL_KEY),
-  cert: fs.readFileSync(process.env.SSL_CERT),
 };
 
 const app = express();
@@ -105,7 +97,7 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 443;
-https.createServer(options, app).listen(PORT);
+http.createServer(options, app).listen(PORT);
 
 function createHtml(appHtml, scriptTag, csrfToken) {
   return `<!DOCTYPE html>
