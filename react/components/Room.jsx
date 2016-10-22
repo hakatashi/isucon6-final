@@ -151,12 +151,9 @@ class Room extends React.Component {
   }
 
   render() {
-    let strokes = this.state.strokes;
-    if (this.state.tmpStroke !== null) {
-      const tmpStroke = Object.assign({}, this.state.tmpStroke);
-      tmpStroke.points = tmpStroke.points.map(p => `${p.x},${p.y}`).join(' ');
-      strokes = strokes.concat([tmpStroke]);
-    }
+    const strokes = this.state.tmpStroke === null ?
+      this.state.strokes :
+      this.state.strokes.concat([this.state.tmpStroke]);
 
     return (
       <div className="room">
