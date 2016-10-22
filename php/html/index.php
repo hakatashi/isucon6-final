@@ -152,7 +152,7 @@ $app->post('/api/csrf_token', function ($request, $response, $args) {
 
     $token = hash('sha256', rand().uniqid());
 
-    $sql = "INSERT INTO `tokens` (`csrf_token`) VALUES ( $token )";
+    $sql = "INSERT INTO `tokens` (`csrf_token`) VALUES ('$token')";
 
     $id = execute($dbh, $sql);
 

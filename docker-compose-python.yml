@@ -4,13 +4,23 @@ services:
     extends:
       file: docker-compose-mysql.yml
       service: mysql
+    ports:
+      - "3306:3306"
+  redis:
+    extends:
+      file: docker-compose-redis.yml
+      service: redis
+    ports:
+      - "6379:6379"
   python:
     build:
       context: ./python
       dockerfile: Dockerfile
     depends_on:
+      - redis
       - mysql
     links:
+      - redis
       - mysql
     environment:
       ISUCON_ENV: production
@@ -18,6 +28,9 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
+      REDIS_URL: redis:6379
+    ports:
+      - "80:80"
   react:
     extends:
       file: docker-compose-react.yml

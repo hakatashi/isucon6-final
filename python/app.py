@@ -7,6 +7,7 @@ import time
 import MySQLdb.cursors
 
 from flask import Flask, jsonify, request, Response
+from flask_sse import sse
 
 
 def get_db():
@@ -140,6 +141,8 @@ def update_room_watcher(db, room_id, token_id):
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 app.config['DEBUG'] = os.environ.get('ISUCON_ENV') != 'production'
+app.config['REDIS_URL'] = 'redis://' + os.environ.get('REDIS_URL')
+app.register_blueprint(sse, url_prefix = '/sse')
 
 # Routes
 
