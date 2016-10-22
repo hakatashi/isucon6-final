@@ -78,7 +78,7 @@ def type_cast_stroke_data(data):
         'green': int(data['green']),
         'blue': int(data['blue']),
         'alpha': float(data['alpha']),
-        'points': data['points'] if 'points' in data and data['points'] else '',
+        'points': list(map(type_cast_point_data, data['points'])) if 'points' in data and data['points'] else [],
         'created_at': to_RFC3339_micro(data['created_at']) if data['created_at'] else '',
     }
 
@@ -109,8 +109,13 @@ def check_token(db, csrf_token):
     return token
 
 
+def get_stroke_points(db, stroke_id):
+    sql = 'SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = %(stroke_id)s ORDER BY `id` ASC'
+    return select_all(db, sql, {'stroke_id': stroke_id})
+
+
 def get_strokes(db, room_id, greater_than_id):
-    sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`, `points` FROM `strokes`'
+    sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`'
     sql += ' WHERE `room_id` = %(room_id)s AND `id` > %(greater_than_id)s ORDER BY `id` ASC'
     return select_all(db, sql, {'room_id': room_id, 'greater_than_id': greater_than_id})
 
@@ -235,6 +240,9 @@ def get_api_rooms_id(id):
 
     strokes = get_strokes(db, room['id'], 0)
 
+    for i, stroke in enumerate(strokes):
+        strokes[i]['points'] = get_stroke_points(db, stroke['id'])
+
     room['strokes'] = strokes
     room['watcher_count'] = get_watcher_count(db, room['id'])
 
@@ -284,7 +292,6 @@ def get_api_stream_rooms_id(id):
 
     return Response(response, mimetype='text/event-stream')
 
-
 @app.route('/api/strokes/rooms/<id>', methods=['POST'])
 def post_api_strokes_rooms_id(id):
     db = get_db()
@@ -321,8 +328,8 @@ def post_api_strokes_rooms_id(id):
     cursor = db.cursor()
     cursor.connection.autocommit(False)
     try:
-        sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`, `points`)'
-        sql += ' VALUES(%(room_id)s, %(width)s, %(red)s, %(green)s, %(blue)s, %(alpha)s, %(points)s)'
+        sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)'
+        sql += ' VALUES(%(room_id)s, %(width)s, %(red)s, %(green)s, %(blue)s, %(alpha)s)'
         cursor.execute(sql, {
             'room_id': room['id'],
             'width': posted_stroke.get('width'),
@@ -330,9 +337,16 @@ def post_api_strokes_rooms_id(id):
             'green': posted_stroke.get('green'),
             'blue': posted_stroke.get('blue'),
             'alpha': posted_stroke.get('alpha'),
-            'points': ' '.join(map(lambda s:str(s['x']) + ',' + str(s['y']), posted_stroke.get('points'))),
         })
         stroke_id = cursor.lastrowid
+
+        sql = 'INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (%(stroke_id)s, %(x)s, %(y)s)'
+        for point in posted_stroke.get('points'):
+            cursor.execute(sql, {
+                'stroke_id': stroke_id,
+                'x': point['x'],
+                'y': point['y']
+            })
         cursor.connection.commit()
     except Exception as e:
         cursor.connection.rollback()
@@ -343,10 +357,11 @@ def post_api_strokes_rooms_id(id):
     else:
         cursor.connection.autocommit(True)
 
-    sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`, `points` FROM `strokes`'
+    sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`'
     sql += ' WHERE `id` = %(stroke_id)s'
     stroke = select_one(db, sql, {'stroke_id': stroke_id})
 
+    stroke['points'] = get_stroke_points(db, stroke_id)
     sse.publish(type_cast_stroke_data(stroke), type = 'stroke', id = str(stroke['id']), channel = str(room['id']))
 
     return jsonify({'stroke': type_cast_stroke_data(stroke)})

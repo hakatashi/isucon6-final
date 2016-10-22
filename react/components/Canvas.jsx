@@ -66,7 +66,7 @@ class Canvas extends React.Component {
               strokeLinecap="round"
               strokeLinejoin="round"
               fill="none"
-              points={stroke.points}
+              points={stroke.points.map((point) => `${point.x},${point.y}`).join(' ')}
             />
         ))}
       </svg>
