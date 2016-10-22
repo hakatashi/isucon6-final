@@ -338,8 +338,8 @@ def post_api_strokes_rooms_id(id):
     cursor = db.cursor()
     cursor.connection.autocommit(False)
     try:
-        sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)'
-        sql += ' VALUES(%(room_id)s, %(width)s, %(red)s, %(green)s, %(blue)s, %(alpha)s)'
+        sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`, `points`)'
+        sql += ' VALUES(%(room_id)s, %(width)s, %(red)s, %(green)s, %(blue)s, %(alpha)s, %(points)s)'
         cursor.execute(sql, {
             'room_id': room['id'],
             'width': posted_stroke.get('width'),
