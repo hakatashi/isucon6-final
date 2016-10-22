@@ -20,8 +20,8 @@ services:
       ISUCON_ENV: production
       MYSQL_HOST: isu05
       MYSQL_PORT: 3306
-      MYSQL_USER: isucon
-      MYSQL_PASS: isucon
+      MYSQL_USER: root
+      MYSQL_PASS: password
     ports:
       - "80:80"
   react:
