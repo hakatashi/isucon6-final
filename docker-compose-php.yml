@@ -22,6 +22,8 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
+    ports:
+      - "80:80"
   react:
     extends:
       file: docker-compose-react.yml
@@ -31,6 +33,6 @@ services:
     links:
       - php
     environment:
-      API: http://php:80
+      API: http://13.71.153.232:80
     ports:
-      - "443:443"
+      - "444:444"
