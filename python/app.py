@@ -114,7 +114,7 @@ def get_strokes(db, room_id, greater_than_id):
     sql += ' WHERE `room_id` = %(room_id)s AND `id` > %(greater_than_id)s ORDER BY `id` ASC'
     strokes = select_all(db, sql, {'room_id': room_id, 'greater_than_id': greater_than_id})
     for stroke in strokes:
-        strokes['points'] = map(lambda p:{'x': p.split(',')[0], 'y': p.split(',')[1]}, stroke['points'].split(' '))
+        stroke['points'] = map(lambda p:{'x': p.split(',')[0], 'y': p.split(',')[1]}, stroke['points'].split(' '))
     return strokes
 
 
