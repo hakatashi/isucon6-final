@@ -347,7 +347,7 @@ def post_api_strokes_rooms_id(id):
             'green': posted_stroke.get('green'),
             'blue': posted_stroke.get('blue'),
             'alpha': posted_stroke.get('alpha'),
-            'points': ' '.join(map(lambda s:s['x'] + ',' + s['y'], posted_stroke.get('points'))),
+            'points': ' '.join(map(lambda s:str(s['x']) + ',' + str(s['y']), posted_stroke.get('points'))),
         })
         cursor.connection.commit()
     except Exception as e:
