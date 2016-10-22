@@ -18,7 +18,7 @@ services:
       - mysql
     environment:
       ISUCON_ENV: production
-      MYSQL_HOST: mysql
+      MYSQL_HOST: isu05
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
@@ -33,6 +33,6 @@ services:
     links:
       - php
     environment:
-      API: http://13.71.153.232:80
+      API: http://isu04:80
     ports:
       - "444:444"
