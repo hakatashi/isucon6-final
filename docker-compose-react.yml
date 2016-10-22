@@ -1,0 +1,28 @@
+version: '2'
+services:
+  react_dev:
+    build:
+      context: ./react
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./react:/react
+      - /react/node_modules
+      - /react/build
+      - ./ssl:/ssl:ro
+    environment:
+      SSL_KEY: /ssl/oreore.key
+      SSL_CERT: /ssl/oreore.crt
+      ISUCON_ENV: development
+      PORT: 443
+  react:
+    build:
+      context: ./react
+      dockerfile: Dockerfile
+    volumes:
+      - ./ssl:/ssl:ro
+    environment:
+      SSL_KEY: /ssl/oreore.key
+      SSL_CERT: /ssl/oreore.crt
+      ISUCON_ENV: production
+      NODE_ENV: production
+      PORT: 443

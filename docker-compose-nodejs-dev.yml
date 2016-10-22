@@ -1,0 +1,36 @@
+version: '2'
+services:
+  mysql:
+    extends:
+      file: docker-compose-mysql.yml
+      service: mysql
+  nodejs_dev:
+    build:
+      context: ./nodejs
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./nodejs:/app
+      - /app/node_modules
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      PORT: 80
+      ISUCON_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  react_dev:
+    extends:
+      file: docker-compose-react.yml
+      service: react_dev
+    depends_on:
+      - nodejs_dev
+    links:
+      - nodejs_dev
+    environment:
+      API: http://nodejs_dev:80
+    ports:
+      - "443:443"

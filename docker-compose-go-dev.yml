@@ -1,0 +1,34 @@
+version: '2'
+services:
+  mysql:
+    extends:
+      file: docker-compose-mysql.yml
+      service: mysql
+  go_dev:
+    build:
+      context: ./go
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./go:/go/src/github.com/catatsuy/isucon6-final/webapp/go
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  react_dev:
+    extends:
+      file: docker-compose-react.yml
+      service: react_dev
+    depends_on:
+      - go_dev
+    links:
+      - go_dev
+    environment:
+      API: http://go_dev:80
+    ports:
+      - "443:443"
