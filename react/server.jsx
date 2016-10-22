@@ -97,7 +97,7 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 443;
-http.createServer(options, app).listen(PORT);
+http.createServer(app).listen(PORT);
 
 function createHtml(appHtml, scriptTag, csrfToken) {
   return `<!DOCTYPE html>
