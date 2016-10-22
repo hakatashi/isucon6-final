@@ -49,8 +49,7 @@ gulp.task('server', () => {
 });
 
 gulp.task('browser', () => {
-  return gulp.src(['browser.js'])
-    .pipe(webpack(webpackConfig))
+  return gulp.src(['bundle.js'])
     .on('error', swallowError)
     .pipe(gulp.dest('build'));
 });
@@ -68,4 +67,3 @@ function swallowError (error) {
 
   this.emit('end')
 }
-
