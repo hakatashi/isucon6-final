@@ -154,7 +154,7 @@ class Room extends React.Component {
     let strokes = this.state.strokes;
     if (this.state.tmpStroke !== null) {
       const tmpStroke = Object.assign({}, this.state.tmpStroke);
-      tmpStroke.points = tmpStroke.points.map(p => `${p.x},${p.y}`),join(' ');
+      tmpStroke.points = tmpStroke.points.map(p => `${p.x},${p.y}`).join(' ');
       strokes = strokes.concat([tmpStroke]);
     }
 
